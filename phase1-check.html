@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 1 Check - Shell / Login / Splash</title>
+<style>
+/* ============================================================================
+   styles/app.css
+   Shared design tokens + base styles. Every page stylesheet (dashboard.css,
+   login.css, etc.) is written against these CSS variables so dark mode and
+   any future re-theming only need to change values here.
+   Colors are carried over unchanged from the original Index.html so the
+   product doesn't visually shift underneath existing users.
+   ============================================================================ */
+
+:root {
+  --nb: #0b3d91;      /* Nayatel primary blue */
+  --nbk: #082a66;      /* primary blue, hover/active */
+  --ng: #0a8a3f;      /* success green */
+  --ngk: #066b30;
+  --bg: #eceaf8;
+  --cb: #ffffff;      /* card background */
+  --br: #dde3df;      /* hairline border */
+  --tm: #1c2620;      /* main text */
+  --ts: #5d6b62;      /* secondary text */
+  --dn: #c0392b;      /* danger/duplicate */
+  --db: #fdeceb;      /* danger background */
+  --rr: 10px;
+
+  --header-grad-top: #1e40af;
+  --header-grad-bottom: #1e3a8f;
+  --accent-orange: #f5a623;
+
+  /* ---- Mobile redesign tokens (mockup-matched) ---- */
+  --page-outer-bg: #e7e9f5;
+  --app-max-w: 480px;
+  --bottom-nav-h: 64px;
+  --topbar-h: 56px;
+
+  --tile-blue-bg: #eaf1ff; --tile-blue-text: #1d4ed8;
+  --tile-green-bg: #e8f8ee; --tile-green-text: #16a34a;
+  --tile-orange-bg: #fff3e6; --tile-orange-text: #ea8c1f;
+  --tile-purple-bg: #f3eefe; --tile-purple-text: #7c3aed;
+
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, .07);
+  --shadow-md: 0 8px 22px rgba(0, 0, 0, .1);
+  --radius-card: 14px;
+  --radius-pill: 20px;
+
+  --skeleton-base: #eef1f5;
+  --skeleton-shine: #f8f9fb;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #10151c;
+    --cb: #1a2028;
+    --br: #2a323d;
+    --tm: #e8ecf1;
+    --ts: #99a3af;
+    --db: #3a1f1d;
+    --skeleton-base: #232b35;
+    --skeleton-shine: #2c3542;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--tm);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body { padding-bottom: env(safe-area-inset-bottom); }
+
+a { color: var(--nb); }
+
+.wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 20px 32px;
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile app shell — edge-to-edge on an actual phone (where --app-max-w is
+   already ~= the viewport width so this has no visible effect), rendered as
+   a centered phone-card frame on wider desktop browsers for a faithful
+   preview of the mobile experience.
+--------------------------------------------------------------------------- */
+body { background: var(--page-outer-bg); }
+@media (prefers-color-scheme: dark) { body { background: #05070a; } }
+
+.app-shell {
+  max-width: var(--app-max-w);
+  margin: 0 auto;
+  background: var(--bg);
+  min-height: 100vh;
+  position: relative;
+  padding-bottom: var(--bottom-nav-h);
+}
+@media (min-width: 560px) {
+  .app-shell {
+    box-shadow: 0 0 50px rgba(0, 0, 0, .18);
+    border-radius: 28px;
+    overflow: hidden;
+    margin-top: 22px; margin-bottom: 22px;
+    min-height: calc(100vh - 44px);
+  }
+}
+
+.app-content { padding: 0 16px 24px; }
+
+/* ---------------------------------------------------------------------------
+   Stat tiles — the colored 2x2 summary grid on the dashboard variants.
+--------------------------------------------------------------------------- */
+.stat-tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-tile { border-radius: 14px; padding: 14px; }
+.stat-tile-value { font-size: 22px; font-weight: 800; line-height: 1.1; }
+.stat-tile-label { font-size: 12px; font-weight: 600; margin-top: 3px; opacity: .85; }
+.stat-tile.blue { background: var(--tile-blue-bg); color: var(--tile-blue-text); }
+.stat-tile.green { background: var(--tile-green-bg); color: var(--tile-green-text); }
+.stat-tile.orange { background: var(--tile-orange-bg); color: var(--tile-orange-text); }
+.stat-tile.purple { background: var(--tile-purple-bg); color: var(--tile-purple-text); }
+
+/* Respect reduced-motion preference everywhere — required by the frontend
+   skill's quality floor and by several users on low-end field devices. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible keyboard focus (quality floor) — the original relied on browser
+   defaults inconsistently; this makes it explicit everywhere. */
+:focus-visible {
+  outline: 2px solid var(--nb);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Toast (components/toast.js)
+--------------------------------------------------------------------------- */
+.toast-stack {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+.toast {
+  background: var(--tm);
+  color: var(--cb);
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .2s ease, transform .2s ease;
+  pointer-events: auto;
+  max-width: 90vw;
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.toast-error { background: var(--dn); }
+.toast.toast-success { background: var(--ngk); }
+.toast-action {
+  margin-left: 10px;
+  background: rgba(255,255,255,.18);
+  border: none;
+  color: inherit;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------
+   Skeleton loading (components/loader.js)
+--------------------------------------------------------------------------- */
+.skel {
+  background: linear-gradient(100deg, var(--skeleton-base) 30%, var(--skeleton-shine) 50%, var(--skeleton-base) 70%);
+  background-size: 200% 100%;
+  animation: skel-shine 1.3s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes skel-shine {
+  0% { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
+}
+.skel-line { height: 12px; margin-bottom: 8px; }
+.skel-card { border-radius: var(--radius-card); }
+
+/* ---------------------------------------------------------------------------
+   Stale-data banner — shown when a page renders from api.js's offline cache
+   (the `_stale` flag) instead of a live network response.
+--------------------------------------------------------------------------- */
+.stale-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff3cd;
+  border: 1px solid #ffcc02;
+  border-radius: 9px;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  color: #7a5c00;
+  margin-bottom: 12px;
+}
+.stale-banner .material-icons { font-size: 17px; color: #e67e22; }
+
+/* ---------------------------------------------------------------------------
+   Sync status pill (offline mutation queue indicator)
+--------------------------------------------------------------------------- */
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  cursor: default;
+}
+.sync-pill .material-icons { font-size: 14px; }
+.sync-pill.pending { background: #fff3cd; color: #856404; }
+.sync-pill.syncing { background: #e4eefb; color: #1d5fa8; }
+.sync-pill.synced  { background: #eaf6ee; color: var(--ngk); }
+.sync-pill.failed  { background: var(--db); color: var(--dn); cursor: pointer; }
+.sync-pill.syncing .material-icons { animation: sync-spin 1s linear infinite; }
+@keyframes sync-spin { to { transform: rotate(360deg); } }
+
+.floating-sync-pill {
+  position: fixed; right: 16px; z-index: 1500;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+/* ---------------------------------------------------------------------------
+   Shared small-form primitives — used by the change-password form on both
+   the login page (first-login flow) and the profile page (voluntary change).
+--------------------------------------------------------------------------- */
+.cp-label { font-size: 12.5px; font-weight: 700; color: var(--ts); display: block; margin-bottom: 4px; }
+.cp-input {
+  width: 100%; height: 40px; border: 1px solid var(--br); border-radius: 8px; padding: 0 12px;
+  font-size: 13px; box-sizing: border-box; margin-bottom: 12px; outline: none; background: var(--bg); color: var(--tm);
+}
+.cp-input:focus { border-color: var(--nb); }
+.cp-msg { font-size: 12px; margin-bottom: 10px; padding: 8px 12px; border-radius: 6px; }
+.cp-msg-err { color: var(--dn); background: var(--db); }
+.cp-msg-ok { color: var(--ngk); background: #d4edda; }
+
+/* ---------------------------------------------------------------------------
+   Generic card primitives — used by profile.js, targets.js, and anywhere
+   else a simple bordered content card is needed outside a specific page's
+   own styled components.
+--------------------------------------------------------------------------- */
+.dash-card { background: var(--cb); border: 1px solid var(--br); border-radius: 12px; padding: 16px 16px 18px; margin-top: 14px; }
+.dash-card h3 { font-size: 14px; font-weight: 700; margin: 0 0 14px; color: var(--tm); }
+.prof-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--br); font-size: 13.5px; color: var(--tm); }
+.prof-row:last-of-type { border-bottom: none; }
+.prof-lbl { color: var(--ts); font-weight: 600; font-size: 12.5px; }
+/* ============================================================================
+   styles/shell.css - Mobile app shell chrome (bottom nav + contextual top bar)
+   Redesigned to match the mockup: bottom tab bar instead of desktop top nav.
+   ============================================================================ */
+
+.tb-greeting {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 16px 14px; height: var(--topbar-h); box-sizing: content-box;
+}
+.tb-greeting-hi { font-size: 13px; color: var(--ts); font-weight: 500; }
+.tb-greeting-name { font-size: 19px; font-weight: 800; color: var(--tm); margin-top: 1px; }
+.tb-bell {
+  width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--cb);
+  box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--tm); flex-shrink: 0;
+}
+
+.tb-title-row {
+  display: flex; align-items: center; gap: 8px; padding: 12px 8px;
+  height: var(--topbar-h); box-sizing: content-box; background: var(--bg);
+}
+.tb-back, .tb-action {
+  width: 36px; height: 36px; border-radius: 10px; border: none; background: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--tm); flex-shrink: 0;
+}
+.tb-back:hover, .tb-action:hover { background: var(--skeleton-base); }
+.tb-title { flex: 1; text-align: center; font-size: 16px; font-weight: 700; color: var(--tm); }
+.tb-spacer { width: 36px; flex-shrink: 0; }
+
+.bn-wrap {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: var(--app-max-w);
+  bottom: 0; height: var(--bottom-nav-h);
+  background: var(--cb); border-top: 1px solid var(--br);
+  display: flex; align-items: stretch; justify-content: space-around;
+  z-index: 500; padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 12px rgba(0,0,0,.06);
+}
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; background: none; border: none; cursor: pointer; color: var(--ts);
+  font-size: 10.5px; font-weight: 600;
+}
+.bn-item .material-icons { font-size: 22px; }
+.bn-item.active { color: var(--nb); }
+.bn-item[data-tab="wizard"] .material-icons { font-size: 30px; color: var(--nb); }
+
+@media (min-width: 560px) {
+  .bn-wrap { border-radius: 0 0 28px 28px; }
+}
+/* ============================================================================
+   styles/login.css - Login screen, redesigned mobile single-column layout
+   matching the reference mockup (logo, CRM ID, password, LOGIN button).
+   ============================================================================ */
+
+.signin-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 32px 28px; background: var(--bg);
+}
+.si-wrap { width: 100%; max-width: 340px; text-align: center; }
+
+.si-logo-badge {
+  width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 14px;
+  background: linear-gradient(135deg, var(--header-grad-top), var(--header-grad-bottom));
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  box-shadow: var(--shadow-md);
+}
+.si-logo-badge .material-icons { font-size: 30px; }
+
+.si-logo-wrap { margin-bottom: 2px; }
+.si-logo-naya { color: var(--nb); font-weight: 800; font-size: 24px; letter-spacing: 1px; font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif; }
+.si-logo-tel { color: var(--accent-orange); font-style: italic; font-weight: 400; font-size: 25px; font-family: 'Brush Script MT', 'Segoe Script', cursive; margin-left: 1px; }
+.si-subtitle { font-size: 13.5px; color: var(--ts); margin-bottom: 28px; }
+
+.signin-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ts); margin: 14px 0 5px; text-align: left; }
+.si-input {
+  width: 100%; height: 46px; border-radius: 12px; border: 1px solid var(--br);
+  background: var(--cb); color: var(--tm); box-sizing: border-box; padding: 0 14px; font-size: 14px;
+}
+.si-input:focus { outline: 2px solid var(--nb); outline-offset: 1px; border-color: var(--nb); }
+
+.pwd-wrap { display: flex; position: relative; }
+.pwd-wrap .si-input { padding-right: 44px; }
+.pwd-toggle {
+  position: absolute; right: 0; top: 0; width: 44px; height: 46px;
+  border: none; background: transparent; cursor: pointer; font-size: 16px; color: var(--ts);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.si-row-between { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; font-size: 12px; }
+.si-remember { display: flex; align-items: center; gap: 6px; color: var(--ts); cursor: pointer; user-select: none; }
+.si-remember input { accent-color: var(--nb); width: 15px; height: 15px; cursor: pointer; }
+.si-forgot { color: var(--nb); cursor: pointer; font-weight: 600; }
+.si-forgot:hover, .si-forgot:focus-visible { text-decoration: underline; }
+
+.signin-err {
+  display: none; font-size: 12.5px; color: var(--dn); margin-top: 10px;
+  padding: 9px 12px; background: var(--db); border-radius: 8px; border: 1px solid #f0c4bf; text-align: left;
+}
+.signin-btn {
+  width: 100%; padding: 13px; background: var(--nb); color: #fff; border: none;
+  border-radius: 12px; font-size: 14.5px; font-weight: 700; letter-spacing: .03em; cursor: pointer; margin-top: 22px;
+}
+.signin-btn:hover { background: var(--nbk); }
+.signin-btn:disabled { background: #a9b8af; cursor: not-allowed; }
+.signin-footer-note { font-size: 11.5px; color: var(--ts); text-align: center; margin-top: 22px; }
+
+.bio-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 10px; padding: 12px; background: transparent; color: var(--nb);
+  border: 1.5px solid var(--nb); border-radius: 12px; font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+.bio-btn:hover { background: #eaf0fb; }
+.bio-btn:disabled { opacity: .5; cursor: default; }
+
+/* ---- Change-password / biometric-offer modals ---- */
+.cp-overlay {
+  position: fixed; inset: 0; background: rgba(10, 28, 66, .55); z-index: 99999;
+  align-items: center; justify-content: center; padding: 16px; display: flex;
+}
+.cp-modal { background: var(--cb); border-radius: 16px; width: 100%; max-width: 340px; box-shadow: 0 12px 40px rgba(0, 0, 0, .22); overflow: hidden; }
+.cp-modal-hd { background: var(--nb); padding: 18px 22px; }
+.cp-modal-title { font-size: 16px; font-weight: 800; color: #fff; }
+.cp-modal-sub { font-size: 12px; color: rgba(255, 255, 255, .75); margin-top: 3px; }
+.cp-modal-body { padding: 22px; }
+
+
+body { background: #cfd3e6; padding: 24px 0; }
+.section-label { display:inline-block; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #fff; background: #0b3d91; border-radius: 6px 6px 0 0; padding: 6px 14px; }
+.section-center { text-align: center; }
+.frame { max-width: 480px; margin: 0 auto 30px; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.2); background: #fff; }
+.frame-tall { min-height: 640px; position: relative; display:flex; flex-direction:column; }
+
+</style>
+</head>
+<body>
+
+<div class="section-center"><span class="section-label">1. Splash screen</span></div>
+<div class="frame">
+<div style="min-height:520px;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="width:56px;height:56px;border-radius:16px;margin-bottom:18px;background:linear-gradient(135deg,#1e40af,#1e3a8f);display:flex;align-items:center;justify-content:center;">
+    <img src="data:image/png;base64,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" style="width:34px;height:34px;filter:brightness(0) invert(1);">
+  </div>
+  <div style="font-size:22px;font-weight:800;color:#0b3d91;letter-spacing:.5px;font-family:'Trebuchet MS','Segoe UI',Tahoma,sans-serif;">NAYA<span style="color:#f5a623;font-style:italic;font-weight:400;font-family:'Brush Script MT','Segoe Script',cursive;">tel</span></div>
+  <div style="color:#1c2620;font-size:14px;font-weight:600;margin-top:6px;">Sales Management System</div>
+  <div style="width:30px;height:30px;margin-top:26px;border-radius:50%;border:3px solid #e2e8f0;border-top-color:#1e3a8f;"></div>
+</div>
+</div>
+
+<div class="section-center"><span class="section-label">2. Login screen</span></div>
+<div class="frame">
+<div class="signin-page" style="min-height:600px;">
+  <div class="si-wrap">
+    <div class="si-logo-badge"><span class="material-icons">bolt</span></div>
+    <div class="si-logo-wrap"><span class="si-logo-naya">NAYA</span><span class="si-logo-tel">tel</span></div>
+    <div class="si-subtitle">Sales Management System</div>
+    <label class="signin-label">CRM ID</label>
+    <input type="text" class="si-input" value="ali.raza" readonly>
+    <label class="signin-label">Password</label>
+    <div class="pwd-wrap"><input type="password" class="si-input" value="demo1234" readonly></div>
+    <div class="si-row-between">
+      <label class="si-remember"><input type="checkbox" checked disabled> Remember me</label>
+      <span class="si-forgot">Forgot Password?</span>
+    </div>
+    <button type="button" class="signin-btn" disabled>LOGIN</button>
+    <div class="signin-footer-note">Version 3.0</div>
+  </div>
+</div>
+</div>
+
+<div class="section-center"><span class="section-label">3. App shell chrome - Dashboard tab (greeting top bar)</span></div>
+<div class="frame frame-tall">
+<div class="app-shell" style="box-shadow:none;margin:0;border-radius:0;">
+  <div class="tb-greeting">
+    <div><div class="tb-greeting-hi">Good Morning,</div><div class="tb-greeting-name">Ali Raza</div></div>
+    <button class="tb-bell"><span class="material-icons">notifications</span></button>
+  </div>
+  <div class="app-content" style="padding-top:40px;text-align:center;color:#5d6b62;font-size:13px;">
+    (Dashboard content goes here &mdash; Phase 2)
+  </div>
+  <nav class="bn-wrap" style="position:static;transform:none;box-shadow:none;border-top:1px solid var(--br);">
+    <button class="bn-item active"><span class="material-icons">home</span><span class="bn-label">Dashboard</span></button>
+    <button class="bn-item"><span class="material-icons" style="font-size:30px;color:var(--nb);">add_circle</span><span class="bn-label">New Entry</span></button>
+    <button class="bn-item"><span class="material-icons">list_alt</span><span class="bn-label">Entries</span></button>
+    <button class="bn-item"><span class="material-icons">bar_chart</span><span class="bn-label">Reports</span></button>
+    <button class="bn-item"><span class="material-icons">person</span><span class="bn-label">Profile</span></button>
+  </nav>
+</div>
+</div>
+
+<div class="section-center"><span class="section-label">4. App shell chrome - other tab (back+title top bar)</span></div>
+<div class="frame frame-tall">
+<div class="app-shell" style="box-shadow:none;margin:0;border-radius:0;">
+  <div class="tb-title-row">
+    <button class="tb-back"><span class="material-icons">arrow_back</span></button>
+    <div class="tb-title">Entries</div>
+    <button class="tb-action"><span class="material-icons">filter_list</span></button>
+  </div>
+  <div class="app-content" style="padding-top:40px;text-align:center;color:#5d6b62;font-size:13px;">
+    (Entries table goes here &mdash; Phase 4)
+  </div>
+  <nav class="bn-wrap" style="position:static;transform:none;box-shadow:none;border-top:1px solid var(--br);">
+    <button class="bn-item"><span class="material-icons">home</span><span class="bn-label">Dashboard</span></button>
+    <button class="bn-item"><span class="material-icons" style="font-size:30px;color:var(--nb);">add_circle</span><span class="bn-label">New Entry</span></button>
+    <button class="bn-item active"><span class="material-icons">list_alt</span><span class="bn-label">Entries</span></button>
+    <button class="bn-item"><span class="material-icons">bar_chart</span><span class="bn-label">Reports</span></button>
+    <button class="bn-item"><span class="material-icons">person</span><span class="bn-label">Profile</span></button>
+  </nav>
+</div>
+</div>
+
+</body>
+</html>
