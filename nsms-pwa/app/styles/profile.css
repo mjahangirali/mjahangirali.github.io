@@ -1,0 +1,42 @@
+/* ============================================================================
+   styles/profile.css — Profile / Settings / Help & Support (pages/profile.js)
+   and the static Targets table (pages/targets.js, which shares .dash-card
+   and .prof-row from app.css).
+   ============================================================================ */
+
+.prof-hd { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.prof-avatar {
+  width: 54px; height: 54px; border-radius: 50%; background: var(--nb); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; flex-shrink: 0;
+}
+.prof-name { font-size: 17px; font-weight: 700; color: var(--tm); }
+.prof-role { font-size: 12px; color: var(--ts); }
+
+.prof-links { margin-top: 6px; }
+.prof-link-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 2px; border: none; border-bottom: 1px solid var(--br); background: none;
+  font-size: 13.5px; font-weight: 600; color: var(--tm); cursor: pointer; text-align: left;
+}
+.prof-link-btn:last-child { border-bottom: none; }
+.prof-link-btn .material-icons { color: var(--ts); font-size: 19px; }
+.prof-link-btn:hover { color: var(--nb); }
+
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--br); }
+.set-row:last-child { border-bottom: none; }
+.set-row-label { font-size: 13.5px; font-weight: 600; color: var(--tm); }
+.set-row-note { font-size: 11.5px; color: var(--ts); margin-top: 2px; max-width: 340px; }
+
+.set-switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+.set-switch input { opacity: 0; width: 0; height: 0; }
+.set-switch-slider { position: absolute; inset: 0; background: var(--br); border-radius: 24px; cursor: pointer; transition: background .2s; }
+.set-switch-slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform .2s; }
+.set-switch input:checked + .set-switch-slider { background: var(--ng); }
+.set-switch input:checked + .set-switch-slider::before { transform: translateX(18px); }
+
+.targets-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.targets-tbl thead tr { border-bottom: 2px solid var(--br); }
+.targets-tbl th { text-align: left; padding: 8px 6px; color: var(--ts); font-weight: 700; }
+.targets-tbl tbody tr { border-bottom: 1px solid var(--br); }
+.targets-tbl td { padding: 10px 6px; font-weight: 600; color: var(--tm); }
+.targets-tbl-val { text-align: right; font-size: 16px; font-weight: 700; color: var(--nb); }
