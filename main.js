@@ -54,15 +54,40 @@ const splash = document.getElementById('splash');
 boot();
 
 async function boot() {
-  await initPwa();
-  wirePwaEvents();
-  wireAuthEvents();
+  // Guarantees the user is never stuck on the splash screen indefinitely,
+  // regardless of what fails or hangs during startup (a blocked storage
+  // API, a network call that never resolves, anything unforeseen). Worst
+  // case: an extra few seconds' wait, then the login screen appears.
+  let settled = false;
+  const failSafe = setTimeout(() => {
+    if (settled) return;
+    settled = true;
+    console.warn('[boot] Startup timed out — showing login screen anyway.');
+    hideSplash();
+    showLoginScreen();
+  }, 8000);
 
-  const profile = await attemptAutoLogin();
-  hideSplash();
+  try {
+    await initPwa();
+    wirePwaEvents();
+    wireAuthEvents();
 
-  if (profile) startApp(profile);
-  else showLoginScreen();
+    const profile = await attemptAutoLogin();
+    if (settled) return; // fail-safe already fired
+    settled = true;
+    clearTimeout(failSafe);
+    hideSplash();
+
+    if (profile) startApp(profile);
+    else showLoginScreen();
+  } catch (err) {
+    if (settled) return;
+    settled = true;
+    clearTimeout(failSafe);
+    console.error('[boot] Unexpected error during startup:', err);
+    hideSplash();
+    showLoginScreen();
+  }
 }
 
 function hideSplash() {
