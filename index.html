@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NSMS — Nayatel Sales Management System</title>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1e3a8f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NSMS">
+<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png">
+<link rel="icon" href="./assets/icons/favicon.ico">
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="./styles/app.css">
+
+<style>
+  /* Inline (not in app.css) on purpose: this must render before app.css
+     finishes loading, so the splash is never a flash-of-unstyled-content.
+     Matches the reference mockup: white background, logo, spinner ring. */
+  #splash {
+    position: fixed; inset: 0; z-index: 9999; background: #ffffff;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    transition: opacity .25s ease;
+  }
+  #splash .splash-logo-badge {
+    width: 56px; height: 56px; border-radius: 16px; margin-bottom: 18px;
+    background: linear-gradient(135deg, #1e40af, #1e3a8f); display: flex; align-items: center; justify-content: center;
+  }
+  #splash .splash-logo-badge img { width: 34px; height: 34px; filter: brightness(0) invert(1); }
+  #splash .splash-wordmark { font-size: 22px; font-weight: 800; color: #0b3d91; letter-spacing: .5px; font-family: 'Trebuchet MS','Segoe UI',Tahoma,sans-serif; }
+  #splash .splash-wordmark .accent { color: #f5a623; font-style: italic; font-weight: 400; font-family: 'Brush Script MT','Segoe Script',cursive; }
+  #splash .splash-title { color: #1c2620; font-size: 14px; font-weight: 600; margin-top: 6px; }
+  #splash .splash-spinner {
+    width: 30px; height: 30px; margin-top: 26px; border-radius: 50%;
+    border: 3px solid #e2e8f0; border-top-color: #1e3a8f; animation: splash-spin .8s linear infinite;
+  }
+  @keyframes splash-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { #splash .splash-spinner { animation: none; } }
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-logo-badge"><img src="./assets/icons/icon-192.png" alt=""></div>
+  <div class="splash-wordmark">NAYA<span class="accent">tel</span></div>
+  <div class="splash-title">Sales Management System</div>
+  <div class="splash-spinner"></div>
+</div>
+
+<div id="appRoot"></div>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>
