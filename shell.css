@@ -1,0 +1,50 @@
+/* ============================================================================
+   styles/shell.css - Mobile app shell chrome (bottom nav + contextual top bar)
+   Redesigned to match the mockup: bottom tab bar instead of desktop top nav.
+   ============================================================================ */
+
+.tb-greeting {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 16px 14px; height: var(--topbar-h); box-sizing: content-box;
+}
+.tb-greeting-hi { font-size: 13px; color: var(--ts); font-weight: 500; }
+.tb-greeting-name { font-size: 19px; font-weight: 800; color: var(--tm); margin-top: 1px; }
+.tb-bell {
+  width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--cb);
+  box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--tm); flex-shrink: 0;
+}
+
+.tb-title-row {
+  display: flex; align-items: center; gap: 8px; padding: 12px 8px;
+  height: var(--topbar-h); box-sizing: content-box; background: var(--bg);
+}
+.tb-back, .tb-action {
+  width: 36px; height: 36px; border-radius: 10px; border: none; background: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--tm); flex-shrink: 0;
+}
+.tb-back:hover, .tb-action:hover { background: var(--skeleton-base); }
+.tb-title { flex: 1; text-align: center; font-size: 16px; font-weight: 700; color: var(--tm); }
+.tb-spacer { width: 36px; flex-shrink: 0; }
+
+.bn-wrap {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: var(--app-max-w);
+  bottom: 0; height: var(--bottom-nav-h);
+  background: var(--cb); border-top: 1px solid var(--br);
+  display: flex; align-items: stretch; justify-content: space-around;
+  z-index: 500; padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 12px rgba(0,0,0,.06);
+}
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; background: none; border: none; cursor: pointer; color: var(--ts);
+  font-size: 10.5px; font-weight: 600;
+}
+.bn-item .material-icons { font-size: 22px; }
+.bn-item.active { color: var(--nb); }
+.bn-item[data-tab="wizard"] .material-icons { font-size: 30px; color: var(--nb); }
+
+@media (min-width: 560px) {
+  .bn-wrap { border-radius: 0 0 28px 28px; }
+}
